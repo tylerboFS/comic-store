@@ -1,5 +1,5 @@
 //Put some initial data in the database
-require('dotenv').config()
+require("dotenv").config();
 const { client } = require("./index");
 
 //CREATE a Comics tabls
@@ -11,6 +11,7 @@ const dropTables = async () => {
     console.log("Starting to drop tables...");
 
     await client.query(`DROP TABLE IF EXISTS comics`);
+    await client.query(`DROP TABLE IF EXISTS users`);
 
     console.log("Finished dropping tables");
   } catch (err) {
@@ -27,10 +28,16 @@ const createTables = async () => {
       CREATE TABLE comics (
         id SERIAL PRIMARY KEY,
         issueNumber INTEGER NOT NULL,
-        title varchar(255) NOT NULL
+        title VARCHAR(255) NOT NULL
+      );
+
+      CREATE TABLE users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL
       );
     `);
-
+    
     console.log("Finished creating tables");
   } catch (err) {
     console.log("Error creating tables");
