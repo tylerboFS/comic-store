@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require("express");
 const { client } = require("./db");
 
@@ -12,4 +13,5 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
+  console.log("And btw Tyler's favorite food is " + process.env.FOOD);
 });
