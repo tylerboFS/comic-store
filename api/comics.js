@@ -1,8 +1,14 @@
 const express = require("express");
 const comicsRouter = express.Router();
-const { getAllComics, createComic, getAllUsersComics } = require("../db");
+const {
+  getAllComics,
+  createComic,
+  getAllUsersComics,
+  deleteComic,
+} = require("../db");
 const { requireUser } = require("./utils");
 
+// PATH: /api/comics/
 comicsRouter.get("/", async (req, res) => {
   try {
     //get all the comics
@@ -37,6 +43,16 @@ comicsRouter.post("/", requireUser, async (req, res) => {
 
     //send back success message
     res.send(newlyCreatedComic);
+  } catch (err) {
+    res.sendStatus(500);
+  }
+});
+
+comicsRouter.delete("/:id", requireUser, async (req, res) => {
+  try {
+    const comicId = req.params.id;
+    const result = await deleteComic(comicId);
+    res.send(result);
   } catch (err) {
     res.sendStatus(500);
   }

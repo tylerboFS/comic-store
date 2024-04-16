@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require("express");
 const morgan = require("morgan");
+// const ViteExpress = require("vite-express");
 const bodyParser = require('body-parser');
 const { client } = require("./db");
 const apiRouter = require('./api');
@@ -24,10 +25,7 @@ app.use((req, res, next) => {
 
 app.use('/api', apiRouter);
 
-app.get("/", (req, res) => {
-  //SEND HTML
-  res.send(`<h1>Comic Store</h1>`);
-});
+app.use(express.static(`./client/dist`));
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

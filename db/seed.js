@@ -34,9 +34,9 @@ const createTables = async () => {
     
       CREATE TABLE comics (
         id SERIAL PRIMARY KEY,
-        issueNumber INTEGER NOT NULL,
+        "issueNumber" INTEGER NOT NULL,
         title VARCHAR(255) NOT NULL,
-        addedBy INTEGER REFERENCES users(id)
+        "addedBy" INTEGER REFERENCES users(id)
       );
 
       
