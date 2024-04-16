@@ -1,6 +1,6 @@
 //Put some initial data in the database
 require("dotenv").config();
-const { client, createUser, createComic} = require("./index");
+const { client, createUser, createComic } = require("./index");
 const bcrypt = require("bcrypt");
 
 //CREATE a Comics tabls
@@ -26,19 +26,22 @@ const createTables = async () => {
     console.log("Starting to create tables...");
 
     await client.query(`
-      CREATE TABLE comics (
-        id SERIAL PRIMARY KEY,
-        issueNumber INTEGER NOT NULL,
-        title VARCHAR(255) NOT NULL
-      );
-
       CREATE TABLE users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL
       );
-    `);
     
+      CREATE TABLE comics (
+        id SERIAL PRIMARY KEY,
+        issueNumber INTEGER NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        addedBy INTEGER REFERENCES users(id)
+      );
+
+      
+    `);
+
     console.log("Finished creating tables");
   } catch (err) {
     console.log("Error creating tables");
@@ -47,32 +50,34 @@ const createTables = async () => {
 };
 
 const createUsers = async () => {
-
-  try{
+  try {
     console.log("Starting to create users...");
 
     const billy = await createUser("Billy", await bcrypt.hash("BillyBoy", 10));
     const frank = await createUser("frank", await bcrypt.hash("frank", 10));
     const suzie = await createUser("Suzie", await bcrypt.hash("suzie", 10));
-
-  }catch(err){
+  } catch (err) {
     console.log("Error creating users");
     throw err;
   }
-
-}
+};
 
 const createComics = async () => {
-  try{
-    const spiderMan = await createComic({issueNumber: 102, title:"The Amazing Spiderman"});
-    const superMan = await createComic({issueNumber: 55, title:"Superman"});
-    const xMen = await createComic({issueNumber: 101, title:"The Uncanny X-Men"});
-
-  }catch(err){
+  try {
+    const spiderMan = await createComic({
+      issueNumber: 102,
+      title: "The Amazing Spiderman",
+    });
+    const superMan = await createComic({ issueNumber: 55, title: "Superman" });
+    const xMen = await createComic({
+      issueNumber: 101,
+      title: "The Uncanny X-Men",
+    });
+  } catch (err) {
     console.log("Error creating comics");
     throw err;
   }
-}
+};
 
 const rebuildDB = async () => {
   try {

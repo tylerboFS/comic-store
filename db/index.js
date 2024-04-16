@@ -42,17 +42,17 @@ const createUser = async (username, password) => {
   }
 };
 
-const createComic = async ({ issueNumber, title }) => {
+const createComic = async ({ issueNumber, title, addedBy }) => {
   try {
     const {
       rows: [comic],
     } = await client.query(
       `
-      INSERT INTO comics(issueNumber, title)
-      VALUES ($1, $2)
+      INSERT INTO comics(issueNumber, title, addedBy)
+      VALUES ($1, $2, $3)
       RETURNING *;
     `,
-      [issueNumber, title]
+      [issueNumber, title, addedBy]
     );
 
     return comic;
@@ -73,10 +73,23 @@ const getAllComics = async () => {
   }
 };
 
+const getAllUsersComics = async (userId) => {
+  try {
+    const { rows } = await client.query(`
+    SELECT * FROM comics WHERE addedBy=${userId};
+    `);
+
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   client,
   createUser,
   createComic,
   getAllComics,
-  getUserById
+  getUserById,
+  getAllUsersComics
 };
