@@ -1,6 +1,7 @@
 //Put some initial data in the database
 require("dotenv").config();
-const { client } = require("./index");
+const { client, createUser, createComic} = require("./index");
+const bcrypt = require("bcrypt");
 
 //CREATE a Comics tabls
 
@@ -45,12 +46,42 @@ const createTables = async () => {
   }
 };
 
+const createUsers = async () => {
+
+  try{
+    console.log("Starting to create users...");
+
+    const billy = await createUser("Billy", await bcrypt.hash("BillyBoy", 10));
+    const frank = await createUser("frank", await bcrypt.hash("frank", 10));
+    const suzie = await createUser("Suzie", await bcrypt.hash("suzie", 10));
+
+  }catch(err){
+    console.log("Error creating users");
+    throw err;
+  }
+
+}
+
+const createComics = async () => {
+  try{
+    const spiderMan = await createComic({issueNumber: 102, title:"The Amazing Spiderman"});
+    const superMan = await createComic({issueNumber: 55, title:"Superman"});
+    const xMen = await createComic({issueNumber: 101, title:"The Uncanny X-Men"});
+
+  }catch(err){
+    console.log("Error creating comics");
+    throw err;
+  }
+}
+
 const rebuildDB = async () => {
   try {
     client.connect();
 
     await dropTables();
     await createTables();
+    await createUsers();
+    await createComics();
 
     client.end();
   } catch (err) {

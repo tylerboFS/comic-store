@@ -6,7 +6,7 @@ const { client } = require("./db");
 const apiRouter = require('./api');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;  
 
 client.connect();
 
@@ -25,6 +25,7 @@ app.use((req, res, next) => {
 app.use('/api', apiRouter);
 
 app.get("/", (req, res) => {
+  //SEND HTML
   res.send(`<h1>Comic Store</h1>`);
 });
 

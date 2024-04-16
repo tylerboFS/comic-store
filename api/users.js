@@ -1,7 +1,15 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const usersRouter = express.Router();
-const { client } = require("../db");
+const jwt = require("jsonwebtoken");
+const { client, createUser } = require("../db");
+
+const signToken = (username, id) => {
+  const token = jwt.sign({ id, username }, process.env.JWT_SECRET, {
+    expiresIn: "1w",
+  });
+  return token;
+};
 
 usersRouter.get("/", (req, res) => {
   res.send("This is the root for /api/users");
@@ -15,8 +23,10 @@ usersRouter.post("/login", async (req, res) => {
 
   //Does this user exist?
   try {
-    const { rows: [user] } = await client.query(
-    `
+    const {
+      rows: [user],
+    } = await client.query(
+      `
       SELECT * FROM users
       WHERE username = $1
     `,
@@ -24,18 +34,21 @@ usersRouter.post("/login", async (req, res) => {
     );
 
     //If there is no user send back a 401 Unauthorized
-    if(!user){
+    if (!user) {
       res.sendStatus(401);
-    }
-    else{
+    } else {
       //Check the password against the hash
-      const passwordIsAMatch = await bcrypt.compare(plainTextPassword, user.password);
-      if(passwordIsAMatch){
+      const passwordIsAMatch = await bcrypt.compare(
+        plainTextPassword,
+        user.password
+      );
+      if (passwordIsAMatch) {
         //This is a valid log in
-        //WHAT NOW??
-        //TODO: Send a JWT to the client
-        res.send("This is a valid login");
-      }else{
+
+        const token = signToken(user.username, user.id);
+
+        res.send({ message: "Succesfully Logged in", token });
+      } else {
         res.sendStatus(401);
       }
     }
@@ -43,7 +56,6 @@ usersRouter.post("/login", async (req, res) => {
     console.log(err);
     res.sendStatus(500);
   }
-
 });
 
 //Create a user with a hashed password
@@ -56,21 +68,15 @@ usersRouter.post("/register", async (req, res) => {
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(plainTextPassword, saltRounds);
 
-  //I need to create the user with the username and hashed password
   try {
-    const {
-      rows: [user],
-    } = await client.query(
-      `
-      INSERT INTO users(username, password)
-      VALUES ($1, $2)
-      RETURNING *;
-  `,
-      [username, hashedPassword]
-    );
+    //Create the user with the username and hashed password
+    const user = createUser(username, hashedPassword);
 
-    //TODO: Send back the JWT Token
-    res.send({ id: user.id });
+    //Sign a token with user info
+    const token = signToken(user.username, user.id);
+
+    //Send back the token
+    res.send({ message: "Successful Registration", token });
   } catch (err) {
     console.log("Error creating user", err);
     res.sendStatus(500);
