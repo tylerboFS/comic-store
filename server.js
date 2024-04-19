@@ -3,13 +3,11 @@ const express = require("express");
 const morgan = require("morgan");
 // const ViteExpress = require("vite-express");
 const bodyParser = require('body-parser');
-const { client } = require("./db");
 const apiRouter = require('./api');
 
 const app = express();
 const PORT = process.env.PORT || 8080;  
 
-client.connect();
 
 app.use(morgan('dev'));
 

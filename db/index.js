@@ -1,22 +1,29 @@
-///Connect to my comic-store database
+///Connect to my comic-store database with Prisma
+const { PrismaClient } = require("@prisma/client");
 
-const { Client } = require("pg");
-
-const client = new Client(
-  process.env.DATABASE_URL || "postgres://localhost:5432/comic-store"
-);
+const prisma = new PrismaClient();
 
 const getUserById = async (id) => {
   try {
-    const {
-      rows: [user],
-    } = await client.query(
-      `
-    SELECT * FROM users 
-    WHERE id=$1;
-  `,
-      [id]
-    );
+    const user = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return user;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const getUserByUsername = async (username) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
     return user;
   } catch (err) {
     throw err;
@@ -25,16 +32,12 @@ const getUserById = async (id) => {
 
 const createUser = async (username, password) => {
   try {
-    const {
-      rows: [user],
-    } = await client.query(
-      `
-    INSERT INTO users(username, password)
-    VALUES ($1, $2)
-    RETURNING *;
-    `,
-      [username, password]
-    );
+    const user = await prisma.user.create({
+      data: {
+        username,
+        password,
+      },
+    });
 
     return user;
   } catch (err) {
@@ -42,18 +45,77 @@ const createUser = async (username, password) => {
   }
 };
 
-const createComic = async ({ issueNumber, title, addedBy }) => {
+const createCharacter = async (name, description) => {
   try {
-    const {
-      rows: [comic],
-    } = await client.query(
-      `
-      INSERT INTO comics("issueNumber", title, "addedBy")
-      VALUES ($1, $2, $3)
-      RETURNING *;
-    `,
-      [issueNumber, title, addedBy]
-    );
+    const character = await prisma.character.create({
+      data: {
+        name,
+        description,
+      },
+    });
+
+    return character;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const addComicToCharacter = async (comic, character) => {
+  try{
+    const updatedCharacter = await prisma.character.update({
+      where : {
+        id: character.id
+      },
+      data : {
+        comics : { connect : comic}
+      }
+    });
+
+    return updatedCharacter;
+  }catch(err){
+    throw err;
+  }
+}
+
+const addCharatertoComic = async (comic, character) => {
+  try{
+    const updatedComic = await prisma.comic.update({
+      where : {
+        id: comic.id
+      },
+      data : {
+        characters : { connect : character}
+      }
+    });
+
+    return updatedComic;
+  }catch(err){
+    throw err;
+  }
+}
+//   try {
+//     const updatedCharacter = await prisma.character.update({
+//       where: { id: character.id },
+//       data: {
+//         comics: { connect: comic },
+//       },
+//     });
+
+//     return updatedCharacter;
+//   } catch (err) {
+//     throw err;
+//   }
+// };
+
+const createComic = async ({ issueNumber, title, ownerId }) => {
+  try {
+    const comic = await prisma.comic.create({
+      data: {
+        issueNumber,
+        title,
+        ownerId,
+      },
+    });
 
     return comic;
   } catch (err) {
@@ -63,9 +125,7 @@ const createComic = async ({ issueNumber, title, addedBy }) => {
 
 const getAllComics = async () => {
   try {
-    const { rows } = await client.query(`
-    SELECT * FROM comics;
-    `);
+    const rows = await prisma.comic.findMany();
 
     return rows;
   } catch (err) {
@@ -74,39 +134,46 @@ const getAllComics = async () => {
 };
 
 const deleteComic = async (comicId) => {
-  try{
-    const {rows: [comic]} = await client.query( 
-      `
-        DELETE FROM comics
-        WHERE id=${comicId}
-        RETURNING *;
-      `
-    )
+  try {
+    const comic = await prisma.comic.delete({
+      where: {
+        id: parseInt(comicId),
+      },
+    });
+
+    console.log("Result after prisma delete:", comic);
     return comic;
-  }
-  catch(err){
+  } catch (err) {
+    console.log("ERROR", err);
     throw err;
   }
-}
+};
 
 const getAllUsersComics = async (userId) => {
   try {
-    const { rows } = await client.query(`
-    SELECT * FROM comics WHERE addedBy=${userId};
-    `);
+    const userWithComics = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        comics: true,
+      },
+    });
 
-    return rows;
+    return userWithComics.comics;
   } catch (err) {
     throw err;
   }
 };
 
 module.exports = {
-  client,
   createUser,
   createComic,
   getAllComics,
   getUserById,
   getAllUsersComics,
-  deleteComic
+  deleteComic,
+  getUserByUsername,
+  createCharacter,
+  addComicToCharacter,
 };

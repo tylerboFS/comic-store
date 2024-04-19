@@ -1,78 +1,91 @@
 //Put some initial data in the database
 require("dotenv").config();
-const { client, createUser, createComic } = require("./index");
+const { createUser, createComic, createCharacter, addComicToCharacter } = require("./index");
 const bcrypt = require("bcrypt");
 
-//CREATE a Comics tabls
-
-//DROP ANY EXISTING TABLES
-
-const dropTables = async () => {
-  try {
-    console.log("Starting to drop tables...");
-
-    await client.query(`DROP TABLE IF EXISTS comics`);
-    await client.query(`DROP TABLE IF EXISTS users`);
-
-    console.log("Finished dropping tables");
-  } catch (err) {
-    console.log("Error dropping tables");
-    throw err;
-  }
-};
-
-const createTables = async () => {
-  try {
-    console.log("Starting to create tables...");
-
-    await client.query(`
-      CREATE TABLE users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
-      );
-    
-      CREATE TABLE comics (
-        id SERIAL PRIMARY KEY,
-        "issueNumber" INTEGER NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        "addedBy" INTEGER REFERENCES users(id)
-      );
-
-      
-    `);
-
-    console.log("Finished creating tables");
-  } catch (err) {
-    console.log("Error creating tables");
-    throw err;
-  }
-};
+const users = [];
 
 const createUsers = async () => {
   try {
     console.log("Starting to create users...");
 
-    const billy = await createUser("Billy", await bcrypt.hash("BillyBoy", 10));
-    const frank = await createUser("frank", await bcrypt.hash("frank", 10));
-    const suzie = await createUser("Suzie", await bcrypt.hash("suzie", 10));
+    const billy = await createUser(
+      "billboy",
+      await bcrypt.hash("BillyBoy", 10)
+    );
+
+
+    const frank = await createUser(
+      "frankNFurter",
+      await bcrypt.hash("frank", 10)
+    );
+    const suzie = await createUser("sushiGal", await bcrypt.hash("suzie", 10));
+
+    users.push(billy);
+    users.push(frank);
+    users.push(suzie);
+
+    console.log("Finished creating users...");
   } catch (err) {
     console.log("Error creating users");
     throw err;
   }
 };
 
-const createComics = async () => {
+const createComicsAndCharacters = async () => {
+  console.log("Starting creating comics...");
   try {
-    const spiderMan = await createComic({
+    const spiderMan_comic = await createComic({
       issueNumber: 102,
       title: "The Amazing Spiderman",
+      ownerId: users[0].id,
     });
-    const superMan = await createComic({ issueNumber: 55, title: "Superman" });
+    const watchMen = await createComic({
+      issueNumber: 1,
+      title: "Watchmen",
+      ownerId: users[0].id,
+    });
+    const superMan = await createComic({
+      issueNumber: 55,
+      title: "Superman",
+      ownerId: users[1].id,
+    });
     const xMen = await createComic({
       issueNumber: 101,
       title: "The Uncanny X-Men",
+      ownerId: users[2].id,
     });
+    const deadpool = await createComic({
+      issueNumber: 23,
+      title: "Deadpool",
+      ownerId: users[2].id,
+    })
+
+    console.log("Finished creating comics...");
+
+    console.log("Start creating characters...");
+
+    const peterParker = await createCharacter("Peter Parker", "He's Spider-Man");
+    const clarkKent = await createCharacter("Clark Kent aka Kal-El", "He's Superman");
+    const wolverine = await createCharacter("Logan aka James Howlett", "He's Wolverine");
+    const drManhattan = await createCharacter("Dr Manhattan", "He's blue and often nude");
+    const wadeWilson = await createCharacter("Wade Wilson aka Deadpool", "Healing Factor, insane, breaks 4th wall");
+
+    console.log("Finished creating characters...");
+    
+
+    console.log("Add characters to comics");
+    await addComicToCharacter(spiderMan_comic, peterParker);
+    await addComicToCharacter(spiderMan_comic, wolverine);
+    await addComicToCharacter(xMen, wolverine);
+    await addComicToCharacter(superMan, clarkKent);
+    await addComicToCharacter(watchMen, drManhattan);
+    await addComicToCharacter(superMan, drManhattan);
+    await addComicToCharacter(deadpool, wadeWilson);
+    await addComicToCharacter(deadpool, wolverine);
+
+
+
   } catch (err) {
     console.log("Error creating comics");
     throw err;
@@ -81,14 +94,8 @@ const createComics = async () => {
 
 const rebuildDB = async () => {
   try {
-    client.connect();
-
-    await dropTables();
-    await createTables();
     await createUsers();
-    await createComics();
-
-    client.end();
+    await createComicsAndCharacters();
   } catch (err) {
     console.log("Error during rebuildDB");
     throw err;

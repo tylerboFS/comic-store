@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const usersRouter = express.Router();
 const jwt = require("jsonwebtoken");
-const { client, createUser } = require("../db");
+const { client, createUser, getUserById, getUserByUsername, getAllUsersComics } = require("../db");
 
 const signToken = (username, id) => {
   const token = jwt.sign({ id, username }, process.env.JWT_SECRET, {
@@ -23,15 +23,7 @@ usersRouter.post("/login", async (req, res) => {
 
   //Does this user exist?
   try {
-    const {
-      rows: [user],
-    } = await client.query(
-      `
-      SELECT * FROM users
-      WHERE username = $1
-    `,
-      [username]
-    );
+    const user = await getUserByUsername(username);
 
     //If there is no user send back a 401 Unauthorized
     if (!user) {
@@ -82,5 +74,19 @@ usersRouter.post("/register", async (req, res) => {
     res.sendStatus(500);
   }
 });
+
+//   /api/users/:userID/comics
+// get all of this user's comics
+usersRouter.get("/:userId/comics", async (req, res) => {
+  try{
+    const comics = await getAllUsersComics(parseInt(req.params.userId));
+
+    res.send(comics);
+  }
+  catch(err){
+    console.log("Error getting user's comics", err);
+    res.sendStatus(500);
+  }
+})
 
 module.exports = usersRouter;

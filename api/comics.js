@@ -51,11 +51,13 @@ comicsRouter.post("/", requireUser, async (req, res) => {
 comicsRouter.delete("/:id", requireUser, async (req, res) => {
   try {
     const comicId = req.params.id;
+    console.log(comicId);
     const result = await deleteComic(comicId);
     res.send(result);
   } catch (err) {
     res.sendStatus(500);
   }
 });
+
 
 module.exports = comicsRouter;
